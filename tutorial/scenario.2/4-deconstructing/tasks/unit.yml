@@ -10,6 +10,6 @@ run:
   - |
     ./scripts/go_deps.sh
     ./scripts/test_unit.sh
-  dir: super-app/
+  dir: rabay-app/
 inputs:
-  - name: super-app
+  - name: rabay-app
