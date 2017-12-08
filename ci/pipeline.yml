@@ -17,6 +17,8 @@ jobs:
     plan:
     - get: rabay-app
       trigger: true
+    - put: rabay-app
+      params: {path: concourse-tutorial, context: lint & unit test, status: pending}
     - aggregate:
       - task: Linting
         file: rabay-app/tutorial/scenario.2/4-deconstructing/tasks/lint.yml
