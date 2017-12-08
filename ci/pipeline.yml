@@ -25,7 +25,7 @@ resources:
     source:
         driver: git
         initial_version: 0.0.1
-        uri: https://github.com/franklinrabay/concourse-tutorial
+        uri: https://{{github_token}}@github.com/franklinrabay/concourse-tutorial
         branch: version
         file: version
 
