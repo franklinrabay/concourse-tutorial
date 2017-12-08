@@ -11,6 +11,23 @@ resources:
     source: 
       repo: franklinrabay/concourse-tutorial
       access_token: {{github_token}}
+  
+  - name: release-rc
+    type: github-release
+    source:
+      user: franklinrabay
+      repository: concourse-tutorial
+      access_token: {{github_token}}
+      pre_release: True
+  
+  - name: semantic
+    type: semver
+    source:
+        driver: git
+        initial_version: 0.0.1
+        uri: https://github.com/franklinrabay/concourse-tutorial
+        branch: version
+        file: version
 
 jobs:
   - name: Testing
@@ -18,67 +35,63 @@ jobs:
     - get: rabay-app
       trigger: true
     - put: rabay-app
-      params: {path: concourse-tutorial, context: lint & unit test, status: pending}
+      params: {path: rabay-app, context: lint & unit test, status: pending}
     - aggregate:
       - task: Linting
         file: rabay-app/tutorial/scenario.2/4-deconstructing/tasks/lint.yml
       
       - task: Testing
         file: rabay-app/tutorial/scenario.2/4-deconstructing/tasks/unit.yml
-  
-  - name: Compiling
+
+  - name: Bump RC
     plan:
     - get: rabay-app
       passed: ["Testing"]
       trigger: true
 
-    - task: Compile this SHIT!
-      config: 
-        platform: linux
-        image_resource:
-          type: docker-image
-          source: {repository: golang}
-        run:
-          path: sh
-          args:
-          - -exc
-          - |
-            ./scripts/go_deps.sh
-            ./scripts/go_build.sh linux 0.0.1
-            mv super_*_linux_amd64 ../artifact
-          dir: rabay-app
-        inputs:
-          - name: rabay-app
-        outputs:
-          - name: artifact
+    - put: semantic
+      params:
+        pre: rc
+  
+  - name: Compiling
+    plan:
+    - get: rabay-app
+      passed: ["Bump RC"]
+      trigger: true
 
-    - task: INTEGRATIONNNNNN >D
-      config: 
-        platform: linux
-        image_resource:
-          type: docker-image
-          source: {repository: golang}
-        run:
-          path: sh
-          args:
-          - -exc
-          - |
-            ../artifact/super_*_linux_amd64&
-            ./scripts/test_integeration.sh http://127.0.0.1:8080
-            kill -9 `pgrep super_`
-          dir: rabay-app
-        inputs:
-          - name: rabay-app
-          - name: artifact
+    - aggregate:
+      - task: build linux
+        file: rabay-app/tutorial/scenario.4/1-multi-os/tasks/build_linux.yml
 
-    - task: listing data of rabay-app
-      config:
-        platform: linux
-        image_resource:
-          type: docker-image
-          source: {repository: ubuntu}
-        run:
-          path: ls
-          args: ["-l"]
-        inputs: 
-          - name: rabay-app
+      - task: build darwin
+        file: rabay-app/tutorial/scenario.4/1-multi-os/tasks/build_darwin.yml
+
+      - task: build windows
+        file: rabay-app/tutorial/scenario.4/1-multi-os/tasks/build_windows.yml
+      
+    - put: release-rc
+      params:
+        name: rabay-app/tutorial/scenario.4/2-releases/version
+        tag : rabay-app/tutorial/scenario.4/2-releases/version
+        tag_prefix: v
+        globs:
+          - artifact_linux/super_*_linux_amd64
+          - artifact_windows/super_*_windows_amd64
+          - artifact_darwin/super_*_darwin_amd64
+  
+  - name: Integeration test
+    plan:
+
+    - get: release-rc
+      passed: ["Compiling"]
+      params:
+        globs:
+          - super_*_linux_amd64
+
+    - get: rabay-app
+      passed: ["Compiling"]
+      trigger: true
+
+    - task: integeration test
+      file: rabay-app/tutorial/scenario.4/2-releases/tasks/integeration.yml
+      
