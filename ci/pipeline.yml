@@ -80,4 +80,3 @@ jobs:
           args: ["-l"]
         inputs: 
           - name: rabay-app
-          
