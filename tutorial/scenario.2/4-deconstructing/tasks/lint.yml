@@ -5,6 +5,6 @@ image_resource:
   source: {repository: golang}
 run:
   path: ./test_fmt.sh
-  dir: super-app/scripts
+  dir: rabay-app/scripts
 inputs:
-  - name: super-app
+  - name: rabay-app
