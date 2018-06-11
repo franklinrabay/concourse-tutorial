@@ -12,8 +12,8 @@ run:
     ./scripts/go_deps.sh
     ./scripts/go_build.sh windows 0.0.1
     mv super_*_windows_amd64 ../artifact_windows
-  dir: super-app/
+  dir: rabay-app/
 inputs:
-  - name: super-app
+  - name: rabay-app
 outputs:
   - name: artifact_windows
